@@ -109,7 +109,10 @@ public class MessageHelper {
 		Block receivedBlock = JSON.parseObject(message, Block.class);
 //        R.getBlockReadLock().lock();
 		Block latestBlock = blockService.getLatestBlock();
-		logger.info("latestIndex: " + latestBlock.getIndex() + "receivedIndex: " + receivedBlock.getIndex());
+		logger.info("[receive a new block]from: " + receivedBlock.getCreater());
+		logger.info("[check latest block]from: " + latestBlock.getCreater());
+		logger.info("[compare index: ]latestIndex: " + latestBlock.getIndex() + "receivedIndex: "
+				+ receivedBlock.getIndex());
 		if (receivedBlock.getIndex() <= latestBlock.getIndex())
 			return;
 //        R.getBlockReadLock().unlock();

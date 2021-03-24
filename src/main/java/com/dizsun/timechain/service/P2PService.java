@@ -149,7 +149,8 @@ public class P2PService implements ISubscriber {
 				if (viewState == ViewState.WaitingNegotiation) {
 					R.beginConsensus();
 					logger.info("[handleMessage]广播ACK......");
-					peerService.broadcast(messageHelper.responseACK());
+//					peerService.broadcast(messageHelper.responseACK());
+					peerService.write(webSocket, messageHelper.responseACK());
 					logger.info("[handleMessage]广播ACK完成......");
 					viewState = ViewState.WaitingACK;
 				}
@@ -177,8 +178,8 @@ public class P2PService implements ISubscriber {
 						writeBlock(config.getLocalHost());
 						// 区块生成权限获取，写最新区块并且设置时间中心IP为授时中心
 						config.setTimeCenterIp(R.TIME_CENTER_IP);
-						dateUtil.getTimeFromRC();
 						peerService.broadcast(messageHelper.responseLatestBlock());
+						dateUtil.getTimeFromRC();
 						viewState = ViewState.Running;
 						R.getBlockWriteLock().unlock();
 						logger.info("[handleMessage]广播新区块完成！");
@@ -384,7 +385,6 @@ public class P2PService implements ISubscriber {
 		@Override
 		public void run() {
 			logger.info("[HandleMsgThread]正在执行线程" + this.getName() + "......");
-//			latestThread = this.getName();
 			handleMessage(ws, s);
 		}
 
