@@ -83,6 +83,9 @@
                     <source>${java-version}</source>
                     <target>${java-version}</target>
                     <encoding>UTF-8</encoding>
+                    <compilerArguments>
+                       <bootclasspath>${java.home}/lib/rt.jar;${java.home}/lib/jce.jar</bootclasspath>
+                    </compilerArguments>
                 </configuration>
             </plugin>
             <plugin>

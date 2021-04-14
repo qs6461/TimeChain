@@ -38,15 +38,15 @@ public class Broadcaster {
 					for (ISubscriber s : subscribers) {
 						s.doPerRunning();
 					}
-				} else if (dateUtil.getCurrentSecond() == 15) {
+				} else if (dateUtil.getCurrentSecond() == 35) {
 					for (ISubscriber s : subscribers) {
 						s.doPerTP();
 					}
-				} else if (dateUtil.getCurrentSecond() == 30) {
+				} else if (dateUtil.getCurrentSecond() == 40) {
 					for (ISubscriber s : subscribers) {
 						s.doPerTC();
 					}
-				} else if (dateUtil.getCurrentSecond() == 45) {
+				} else if (dateUtil.getCurrentSecond() == 55) {
 					for (ISubscriber s : subscribers) {
 						s.doPerTE();
 					}

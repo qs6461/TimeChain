@@ -40,8 +40,6 @@ public class P2PService implements ISubscriber {
 	private List<ACK> acks;
 	private DateUtil dateUtil = DateUtil.getInstance();
 
-//	private String latestThread = "";
-
 	private static class Holder {
 		private static P2PService p2pService = new P2PService();
 	}
@@ -56,10 +54,10 @@ public class P2PService implements ISubscriber {
 	public void initP2PServer(int port) {
 		this.blockService = BlockService.getInstance();
 		blockService.init();
-//		this.pool = Executors.newSingleThreadExecutor();
 		this.pool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 		this.acks = new ArrayList<>();
 		this.rsaUtil = RSAUtil.getInstance();
+		logger.info("initing rsaUtil -> pubprikey............");
 		rsaUtil.init(config.getLocalHost() + "." + config.getP2pPort());
 		this.peerService = PeerService.getInstance();
 		peerService.init(config.getLocalHost());
@@ -141,17 +139,17 @@ public class P2PService implements ISubscriber {
 				break;
 			case R.REQUEST_NEGOTIATION:
 				/**
-				 * 若对方同意开始公示,则广播ACK
+				 * 若对方同意开始共识,则回复ACK
 				 */
 				logger.info("[handleMessage]收到共识请求......");
 				N = (peerService.length() + 1) / 3;
 				logger.info("[handleMessage]当前连接节点数目的1/3为：" + N);
 				if (viewState == ViewState.WaitingNegotiation) {
 					R.beginConsensus();
-					logger.info("[handleMessage]广播ACK......");
+					logger.info("[handleMessage]回复ACK......");
 //					peerService.broadcast(messageHelper.responseACK());
 					peerService.write(webSocket, messageHelper.responseACK());
-					logger.info("[handleMessage]广播ACK完成......");
+					logger.info("[handleMessage]回复ACK完成......");
 					viewState = ViewState.WaitingACK;
 				}
 				break;
@@ -161,6 +159,7 @@ public class P2PService implements ISubscriber {
 				 */
 				logger.info("[handleMessage]收到一个ACK......");
 				ACK tempACK = new ACK(message.getData());
+				logger.info("[checkACK]测试ack成分:sign: " + tempACK.getSign());
 				logger.info("[handleMessage]收到的ACK的正确性：" + checkACK(tempACK));
 				if (viewState == ViewState.WaitingACK && checkACK(tempACK)) {
 					if (stabilityValue == 1) {
@@ -209,14 +208,6 @@ public class P2PService implements ISubscriber {
 					break;
 				}
 				break;
-
-//                case R.SYNC:
-//
-//                    R.getBlockWriteLock().lock();
-//                    messageHelper.handleBlock(webSocket, message.getData());
-//                    R.getBlockWriteLock().unlock();
-//                    logger.info("[handleMessage]同步最新区块完成！最新区块索引：" + blockService.getLatestBlock().getIndex());
-//                    break;
 			}
 		} catch (Exception e) {
 			logger.info("[handleMessage]处理信息时发生错误：" + e.getMessage());
@@ -257,12 +248,6 @@ public class P2PService implements ISubscriber {
 	 */
 	public void handleMsgThread(WebSocket webSocket, String msg) {
 		Thread thread = new HandleMsgThread(webSocket, msg);
-//		int workQueueSize = pool.getQueue().size();
-//		logger.info("workqueue size:" + workQueueSize);
-//		if (workQueueSize > 10) {
-//			Thread latest = (Thread) pool.getQueue().peek();
-//			logger.info("[block happened]" + latest.getName());
-//		}
 		pool.execute(thread);
 	}
 
@@ -339,39 +324,15 @@ public class P2PService implements ISubscriber {
 		R.getBlockWriteLock().unlock();
 		R.getAndIncrementViewNumber();
 		stabilityValue = 128;
-//        peerService.updateDelay();
 		peerService.regularizeSI();
 		logger.info("[doPerTE]共识结束，查看当前最新块创造者：" + blockService.getLatestBlock().getCreater());
 		logger.info("[doPerTE]共识结束，查看当前最新授时中心：" + config.getTimeCenterIp());
-		// 本轮代表节点更新自身时间
-		if (!config.getTimeCenterIp().equals(R.TIME_CENTER_IP)) {
-			// 本节点不是当前代表节点，需要向代表节点请求时间
+		// 本节点不是当前代表节点，需要向代表节点请求时间
+		if (!config.getTimeCenterIp().equals(R.TIME_CENTER_IP))
 			dateUtil.getTimeFromRC();
-		}
 		// 追加方式写入最新区块日志
 		CloseHook.persistenceAppend();
 	}
-
-//	class LogsPolicy implements RejectedExecutionHandler {
-//		/**
-//		 * Creates an {@code LogsPolicy}.
-//		 */
-//		public LogsPolicy() {
-//			logger.info("[logpolicy]rejected");
-//		}
-//
-//		/**
-//		 * Always throws RejectedExecutionException.
-//		 *
-//		 * @param r the runnable task requested to be executed
-//		 * @param e the executor attempting to execute this task
-//		 * @throws RejectedExecutionException always
-//		 */
-//		public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-//			logger.info("[pool.execute]进程创建失败原因：" + e.toString());
-//			throw new RejectedExecutionException("Task " + r.toString() + " rejected from " + e.toString());
-//		}
-//	}
 
 	class HandleMsgThread extends Thread {
 		private WebSocket ws;
@@ -391,6 +352,8 @@ public class P2PService implements ISubscriber {
 	}
 
 	public void connect(String ip) {
+		logger.info("[connect]准备连接至" + ip + "......");
 		this.peerService.connectToPeer(ip);
+		logger.info("[connect]已经连接至" + ip + "......");
 	}
 }

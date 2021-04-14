@@ -95,6 +95,7 @@ public class MessageHelper {
 		ack.setVN(vn);
 		ack.setPublicKey(rsaUtil.getPubPriKey().getPublicKeyBase64());
 		ack.setSign(rsaUtil.getPubPriKey().encrypt(rsaUtil.getPubPriKey().getPublicKeyBase64() + vn));
+//		logger.info("[check generated ACK]:" + ack.getSign());
 		return JSON.toJSONString(new Message(R.RESPONSE_ACK, JSON.toJSONString(ack), config.getLocalHost(),
 				R.getAndIncrementMessageId()));
 	}
@@ -109,10 +110,6 @@ public class MessageHelper {
 		Block receivedBlock = JSON.parseObject(message, Block.class);
 //        R.getBlockReadLock().lock();
 		Block latestBlock = blockService.getLatestBlock();
-		logger.info("[receive a new block]from: " + receivedBlock.getCreater());
-		logger.info("[check latest block]from: " + latestBlock.getCreater());
-		logger.info("[compare index: ]latestIndex: " + latestBlock.getIndex() + "receivedIndex: "
-				+ receivedBlock.getIndex());
 		if (receivedBlock.getIndex() <= latestBlock.getIndex())
 			return;
 //        R.getBlockReadLock().unlock();
@@ -120,8 +117,7 @@ public class MessageHelper {
 		if (latestBlock.getIndex() + 1 == receivedBlock.getIndex()) {
 //            R.getBlockWriteLock().lock();
 			config.setTimeCenterIp(receivedBlock.getCreater());
-			logger.info(
-					"[RESPONSE_BLOCK -> MessageHelper] new generated block's creator " + receivedBlock.getCreater());
+			logger.info("[RESPONSE_BLOCK] new generated block's creator： " + receivedBlock.getCreater());
 			blockService.addBlock(receivedBlock);
 //            R.getBlockWriteLock().unlock();
 		} else {
@@ -145,6 +141,8 @@ public class MessageHelper {
 			return;
 		}
 		R.getBlockReadLock().unlock();
+
+		config.setTimeCenterIp(latestBlockReceived.getCreater());
 
 		R.getBlockWriteLock().lock();
 		blockService.replaceChain(receivedBlocks);

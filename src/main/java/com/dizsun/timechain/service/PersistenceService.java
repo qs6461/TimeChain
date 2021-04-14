@@ -21,7 +21,7 @@ import com.dizsun.timechain.constant.R;
  */
 public class PersistenceService {
 	private Logger logger = Logger.getLogger(PersistenceService.class);
-	private int latestBlockIndex = -1;
+	private int latestBlockIndex = 0;
 
 	private PersistenceService() {
 	}
@@ -93,10 +93,12 @@ public class PersistenceService {
 			// 写入数据
 			// 这是直接往里重新写
 			FileWriter resultFile = new FileWriter(dataFile, true);
+			@SuppressWarnings("resource")
 			PrintWriter myFile = new PrintWriter(resultFile);
-			if (tempBlockchain.size() > 0) {
-				myFile.println(JSON.toJSON(tempBlockchain.subList(latestBlockIndex + 1, tempBlockchain.size() - 1)));
-				latestBlockIndex = tempBlockchain.size() - 1;
+			if (tempBlockchain.size() > latestBlockIndex) {
+				for (; latestBlockIndex < tempBlockchain.size(); latestBlockIndex++) {
+					myFile.println(JSON.toJSON(tempBlockchain.get(latestBlockIndex)));
+				}
 			}
 			resultFile.close();
 			logger.info(uniqueName + "节点区块链数据文件更新成功！");
@@ -107,8 +109,6 @@ public class PersistenceService {
 			return false;
 		}
 	}
-
-	// 增加在日志文件中追加写入最新区块的方法
 
 //    public boolean blockchainPersistence(List<Block> tempBlockchain){
 //        //直接使用区块链文件名称在当前目录下创建文件对象

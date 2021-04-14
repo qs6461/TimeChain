@@ -11,6 +11,7 @@ public class CloseHook {
 		@Override
 		public void run() {
 			// 退出时执行区块链持久化操作
+//			BlockService.getInstance().blockchainPersistenceAndCut();
 			persistenceAppend();
 		}
 	});
